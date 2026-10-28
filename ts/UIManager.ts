@@ -1743,6 +1743,14 @@ export class UIManager {
             return;
         }
 
+        // typing while hovering over a KeyboardElm goes into it, not to shortcuts
+        const hovered: any = this.mouse.getMouseElm();
+        if (typeof hovered?.typeKey === "function" && hovered.typeKey(e)) {
+            e.preventDefault();
+            this.app.repaint();
+            return;
+        }
+
         // handle key-up via keydown when checking arrow/delete etc.
         if (code === KEY_BACKSPACE || code === KEY_DELETE) {
             if (this.app.scopeManager.scopeSelected !== -1) {
