@@ -41,6 +41,10 @@ import "./GetCircuitAsSubcircuit";
 import { Scope } from "./Scope";
 import { ScopeElm } from "./ScopeElm";
 import { parseIntStrict } from "./NumberParse";
+import { LogicAnalyzer } from "./LogicAnalyzer";
+import { TimingPanel } from "./TimingAnalysis";
+import { TruthTableDialog } from "./TruthTableDialog";
+import { toVerilog } from "./VerilogExport";
 
 export class CommandManager {
 
@@ -181,6 +185,20 @@ export class CommandManager {
             this.app.undoManager?.pushUndo();
             WireConverter.convertWires(this.app);
             this.app.needAnalyze();
+        }
+        if (item == "stepgate" || item == "stepclock")
+            this.app.ui.stepSim(item == "stepclock");
+        if (item == "logicanalyzer")
+            LogicAnalyzer.toggle(this.app);
+        if (item == "timing")
+            TimingPanel.toggle(this.app);
+        if (item == "truthtable")
+            new TruthTableDialog(this.app).show();
+        if (item == "exportverilog" && this.app.sim.ensureDigitalGraph()) {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([toVerilog(this.app.sim.elmArr, this.app.sim.digitalGraph!)], { type: "text/plain" }));
+            a.download = "circuit.v";
+            a.click();
         }
         if (item == "createTest") {
             this.app.undoManager?.pushUndo();

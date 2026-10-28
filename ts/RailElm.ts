@@ -221,6 +221,14 @@ export class RailElm extends VoltageElm {
     }
 
     // convert ticks with rounding
+    // Ticks from absolute tick `nowTicks` to one tick before the rising edge after next: one whole
+    // clock cycle, with everything the crossed edge caused settled (SimulationManager.stepDigital()).
+    ticksToEndOfNextCycle(nowTicks: number): number {
+        const { lowTicks, periodTicks, startsHigh, edgeDelay } =
+            RailElm.phaseLayout(1 / this.frequency, this.dutyCycle ?? 0.5, this.phaseShift ?? 0, nowTicks);
+        return edgeDelay + (startsHigh ? lowTicks : 0) + periodTicks - 1;
+    }
+
     private static ticksToSeconds(ticks: number): number {
         return (Number(ticks) + 0.5) * TIMESCALE;
     }

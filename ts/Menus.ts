@@ -281,6 +281,8 @@ export class Menus {
     conventionCheckItem      = new CheckItem(true);
     noEditCheckItem          = new CheckItem();
     mouseWheelEditCheckItem  = new CheckItem(true);
+    trackpadPanCheckItem     = new CheckItem();
+    minimapCheckItem         = new CheckItem(true);
     toolbarCheckItem         = new CheckItem(true);
     showPropsOnClickCheckItem = new CheckItem(true);
 
@@ -422,17 +424,13 @@ export class Menus {
 
         // ---- Options menu ----
         const optMenu = new Menu(this.app);
-        optMenu.addCheckItem(this.dotsCheckItem, "Show Current");
+        //optMenu.addCheckItem(this.dotsCheckItem, "Show Current");
         optMenu.addCheckItem(this.voltsCheckItem, "Show Voltage");
         this.voltsCheckItem.setCommand({ execute: () => {
             if (this.voltsCheckItem.getState()) this.powerCheckItem.setState(false);
             this.app.setPowerBarEnable();
         }});
-        optMenu.addCheckItem(this.powerCheckItem, "Show Power");
-        this.powerCheckItem.setCommand({ execute: () => {
-            if (this.powerCheckItem.getState()) this.voltsCheckItem.setState(false);
-            this.app.setPowerBarEnable();
-        }});
+        //optMenu.addCheckItem(this.powerCheckItem, "Show Power");
         optMenu.addCheckItem(this.showValuesCheckItem, "Show Values");
         //optMenu.addCheckItem(this.conductanceCheckItem, "Show Conductance");
         optMenu.addCheckItem(this.smallGridCheckItem, "Small Grid");
@@ -443,15 +441,21 @@ export class Menus {
         optMenu.addCheckItem(this.crossHairCheckItem, "Show Cursor Cross Hairs");
         this.crossHairCheckItem.setCommand({ execute: () =>
             this.app.ui?.setOptionInStorage("crossHair", this.crossHairCheckItem.getState()) });
-        optMenu.addCheckItem(this.euroResistorCheckItem, "European Resistors");
-        optMenu.addCheckItem(this.showOhmCheckItem, "Show Ω Unit");
+        //optMenu.addCheckItem(this.euroResistorCheckItem, "European Resistors");
+        //optMenu.addCheckItem(this.showOhmCheckItem, "Show Ω Unit");
         optMenu.addCheckItem(this.euroGatesCheckItem, "IEC Gates");
         optMenu.addCheckItem(this.printableCheckItem, "White Background");
-        optMenu.addCheckItem(this.conventionCheckItem, "Conventional Current Motion");
+        //optMenu.addCheckItem(this.conventionCheckItem, "Conventional Current Motion");
         optMenu.addCheckItem(this.noEditCheckItem, "Disable Editing");
         optMenu.addCheckItem(this.mouseWheelEditCheckItem, "Edit Values With Mouse Wheel");
         this.mouseWheelEditCheckItem.setCommand({ execute: () =>
             this.app.ui?.setOptionInStorage("mouseWheelEdit", this.mouseWheelEditCheckItem.getState()) });
+        optMenu.addCheckItem(this.trackpadPanCheckItem, "Trackpad: Scroll to Pan, Pinch to Zoom");
+        optMenu.addCheckItem(this.minimapCheckItem, "Show Minimap");
+        this.minimapCheckItem.setCommand({ execute: () =>
+            this.app.ui?.setOptionInStorage("minimap", this.minimapCheckItem.getState()) });
+        this.trackpadPanCheckItem.setCommand({ execute: () =>
+            this.app.ui?.setOptionInStorage("trackpadPan", this.trackpadPanCheckItem.getState()) });
         optMenu.addCommand(subheadHtml + Locale.LS("Shortcuts..."),    "options", "shortcuts");
         optMenu.addMenuItem(this.optionsItem, subheadHtml + Locale.LS("Other Options..."), "options", "other");
         if (this.isElectron())
@@ -461,6 +465,12 @@ export class Menus {
         const toolsMenu = new Menu(this.app);
         toolsMenu.addCommand(Locale.LS("Convert Wires to Routed Wires"), "tools", "convertWires");
         toolsMenu.addCommand(Locale.LS("Subcircuit Manager"),            "tools", "subcircuits");
+        toolsMenu.addCommand(Locale.LS("Step One Gate Delay"),           "tools", "stepgate");
+        toolsMenu.addCommand(Locale.LS("Step One Clock Cycle"),           "tools", "stepclock");
+        toolsMenu.addCommand(Locale.LS("Logic Analyzer"),                "tools", "logicanalyzer");
+        toolsMenu.addCommand(Locale.LS("Timing Analysis..."),            "tools", "timing");
+        toolsMenu.addCommand(Locale.LS("Truth Table / Build from Expressions..."), "tools", "truthtable");
+        toolsMenu.addCommand(Locale.LS("Export Verilog"),                "tools", "exportverilog");
         // if (TestCreator.enabled) toolsMenu.addCommand(Locale.LS("Create Test"), "tools", "createTest");
 
         // ---- Assemble horizontal bar ----
@@ -526,15 +536,15 @@ export class Menus {
         const inputMenu = new Menu(this.app);
         this.makeClassCheckItems(inputMenu, [
             "Add Ground",                           "GroundElm",
-            "Add Voltage Source (2-terminal)",      "DCVoltageElm",
-            "Add Battery",                          "BatteryElm",
+            //"Add Voltage Source (2-terminal)",      "DCVoltageElm",
+            //"Add Battery",                          "BatteryElm",
             //"Add A/C Voltage Source (2-terminal)",  "ACVoltageElm",
             "Add Voltage Source (1-terminal)",      "RailElm",
             //"Add A/C Voltage Source (1-terminal)",  "ACRailElm",
             "Add Square Wave Source (1-terminal)",  "SquareRailElm",
             "Add Clock",                            "ClockElm",
             //"Add A/C Sweep",                        "SweepElm",
-            "Add Variable Voltage",                 "VarRailElm",
+            //"Add Variable Voltage",                 "VarRailElm",
             //"Add Antenna",                          "AntennaElm",
             //"Add AM Source",                        "AMElm",
             //"Add FM Source",                        "FMElm",
@@ -557,9 +567,9 @@ export class Menus {
             "Add Line",                       "LineElm",
             "Add Labeled Node",               "LabeledNodeElm",
             "Add Voltmeter/Scope Probe",      "ProbeElm",
-            "Add Ohmmeter",                   "OhmMeterElm",
-            "Add Ammeter",                    "AmmeterElm",
-            "Add Wattmeter",                  "WattmeterTrueElm",
+            //"Add Ohmmeter",                   "OhmMeterElm",
+            //"Add Ammeter",                    "AmmeterElm",
+            //"Add Wattmeter",                  "WattmeterTrueElm",
             "Add Test Point",                 "TestPointElm",
             "Add Decimal Display",            "DecimalDisplayElm",
             "Add Instruction Display",        "InstructionDisplayElm",
@@ -567,9 +577,9 @@ export class Menus {
             "Add Data Export",                "DataRecorderElm",
             //"Add Audio Output",               "AudioOutputElm",
             "Add Stop Trigger",               "StopTriggerElm",
-            "Add DC Motor",                   "DCMotorElm",
-            "Add 3-Phase Motor",              "ThreePhaseMotorElm",
-            "Add Wattmeter (old)",            "WattmeterElm",
+            //"Add DC Motor",                   "DCMotorElm",
+            //"Add 3-Phase Motor",              "ThreePhaseMotorElm",
+            //"Add Wattmeter (old)",            "WattmeterElm",
         ]);
         menu.addSubmenu(subheadHtml + Locale.LS("Outputs and Labels"), outputMenu);
 
@@ -609,25 +619,25 @@ export class Menus {
             //"Add Analog Switch (SPDT)",                       "AnalogSwitch2Elm",
             //"Add Analog Multiplexer",                         "AnalogMuxElm",
             "Add Tristate Buffer",                            "TriStateElm",
-            "Add Schmitt Trigger",                            "SchmittElm",
-            "Add Schmitt Trigger (Inverting)",                "InvertingSchmittElm",
+            //"Add Schmitt Trigger",                            "SchmittElm",
+            //"Add Schmitt Trigger (Inverting)",                "InvertingSchmittElm",
             "Add Delay Buffer",                               "DelayBufferElm",
-            "Add CCII+",                                      "CC2Elm",
-            "Add CCII-",                                      "CC2NegElm",
-            "Add Comparator (Hi-Z/GND output)",               "ComparatorElm",
-            "Add OTA (LM13700 style)",                        "OTAElm",
-            "Add Norton Amp (LM3900)",                        "NortonAmpElm",
-            "Add Controlled Voltage Source (2-terminal)",                  "ControlledVoltageElm",
-            "Add Controlled Current Source (2-terminal)",                  "ControlledCurrentElm",
-            "Add Voltage-Controlled Voltage Source (VCVS)",  "VCVSElm",
-            "Add Voltage-Controlled Current Source (VCCS)",  "VCCSElm",
-            "Add Current-Controlled Voltage Source (CCVS)",  "CCVSElm",
-            "Add Current-Controlled Current Source (CCCS)",  "CCCSElm",
-            "Add Optocoupler",                                "OptocouplerElm",
-            "Add Time Delay Relay",                           "TimeDelayRelayElm",
-            "Add LM317",                                      "SubcircuitElm:~LM317-v2",
-            "Add TL431",                                      "SubcircuitElm:~TL431",
-            "Add Motor Protection Switch",                    "MotorProtectionSwitchElm",
+            //"Add CCII+",                                      "CC2Elm",
+            //"Add CCII-",                                      "CC2NegElm",
+            //"Add Comparator (Hi-Z/GND output)",               "ComparatorElm",
+            //"Add OTA (LM13700 style)",                        "OTAElm",
+            //"Add Norton Amp (LM3900)",                        "NortonAmpElm",
+            //"Add Controlled Voltage Source (2-terminal)",                  "ControlledVoltageElm",
+            //"Add Controlled Current Source (2-terminal)",                  "ControlledCurrentElm",
+            //"Add Voltage-Controlled Voltage Source (VCVS)",  "VCVSElm",
+            //"Add Voltage-Controlled Current Source (VCCS)",  "VCCSElm",
+            //"Add Current-Controlled Voltage Source (CCVS)",  "CCVSElm",
+            //"Add Current-Controlled Current Source (CCCS)",  "CCCSElm",
+            //"Add Optocoupler",                                "OptocouplerElm",
+            //"Add Time Delay Relay",                           "TimeDelayRelayElm",
+            //"Add LM317",                                      "SubcircuitElm:~LM317-v2",
+            //"Add TL431",                                      "SubcircuitElm:~TL431",
+            //"Add Motor Protection Switch",                    "MotorProtectionSwitchElm",
             "Add Subcircuit Instance",                        "SubcircuitElm",
         ]);
         menu.addSubmenu(subheadHtml + Locale.LS("Active Building Blocks"), activeBlocMenu);
@@ -657,8 +667,11 @@ export class Menus {
             "Add Multiplexer",          "MultiplexerElm",
             "Add Demultiplexer",        "DeMultiplexerElm",
             "Add Ganged Multiplexer (74157/74158)", "GangedMultiplexerElm",
+            "Add 3-to-8 Decoder (74138)", "Decoder138Elm",
+            "Add Priority Encoder (74148)", "Encoder148Elm",
             "Add SIPO shift register",  "SipoShiftElm",
             "Add PISO shift register",  "PisoShiftElm",
+            "Add Shift Register w/ Output Latch (74595)", "ShiftRegister595Elm",
             "Add Counter",              "CounterElm",
             "Add Counter w/ Load (9316)", "Counter2Elm",
             "Add Counter w/ Load (74177)", "Counter74177Elm",
@@ -668,6 +681,7 @@ export class Menus {
             "Add Sequence generator",   "SeqGenElm",
             "Add Adder",                "FullAdderElm",
             "Add Half Adder",           "HalfAdderElm",
+            "Add Magnitude Comparator (7485)", "Comparator85Elm",
             "Add Custom Logic",         "UserDefinedLogicElm",  // don't change this, it will break people's saved shortcuts
             "Add Static RAM",           "SRAMElm",
             "Add ROM",                  "ROMElm",

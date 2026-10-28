@@ -1507,8 +1507,43 @@ export class SimulationManager {
 	// count, so a cut-short frame doesn't silently claim sim time that
 	// was never actually simulated.
 	const circuit = this.digitalGraph.circuit;
-	const actualTicks = Number(circuit.runWithDeadline(ticks, tm + frameTimeLimit));
+	this.finishDigitalAdvance(Number(circuit.runWithDeadline(ticks, tm + frameTimeLimit)));
 
+	this.lastIterTime = tm;
+    }
+
+    // Single-step the stopped simulation by simulated time - not by queued events, which the
+    // promotion optimization hides for sleeping/periodic chips. Either one gate delay (the shortest
+    // chip delay), or one clock cycle: up to one tick before the rising edge after next.
+    stepDigital(oneClockCycle: boolean): void {
+	if (!this.ensureDigitalGraph())
+	    return;
+	const circuit = this.digitalGraph!.circuit;
+	const clock = oneClockCycle ? this.elmArr.find(e => typeof e.isDigitalClock === "function" && e.isDigitalClock()) : null;
+	let ticks = Infinity;
+	if (clock != null)
+	    ticks = clock.ticksToEndOfNextCycle(this.digitalTickEpoch + circuit.globalTime);
+	else
+	    for (const c of circuit.chips)
+		if (c.inputLinks.length > 0)
+		    ticks = Math.min(ticks, c.delay[0], c.delay[1]);
+	this.finishDigitalAdvance(Number(circuit.runWithDeadline(isFinite(ticks) ? ticks : 1)));
+    }
+
+    // Analyze/stamp now if the circuit changed while stopped (UIManager only does it while running),
+    // so tools that need the digital graph work on a paused circuit.
+    ensureDigitalGraph(): boolean {
+	if (this.app.analyzeFlag) {
+	    this.analyzeCircuit();
+	    this.app.analyzeFlag = false;
+	}
+	if (this.needsStamp)
+	    this.preStampAndStampCircuit();
+	return this.digitalReady && this.digitalGraph != null;
+    }
+
+    private finishDigitalAdvance(actualTicks: number): void {
+	const circuit = this.digitalGraph!.circuit;
 	this.t += actualTicks * this.maxTimeStep;
 	this.timeStepAccum = 0;
 	this.timeStepCount += actualTicks;
@@ -1516,7 +1551,7 @@ export class SimulationManager {
 	if (this.app.ui)
 	    this.app.ui.steps += actualTicks;
 
-	syncDigitalToNodesNew(this.elmArr, this.digitalGraph);
+	syncDigitalToNodesNew(this.elmArr, this.digitalGraph!);
 	syncNodesToPassiveChips(this.elmArr);
 
 	// Bound Chip.history for every chip a Scope has ever watched - see Chip.trimHistory()'s own
@@ -1526,8 +1561,6 @@ export class SimulationManager {
 	for (const chip of circuit.historyWatchedChips) chip.trimHistory();
 
 	this.app.onTimeStep();
-
-	this.lastIterTime = tm;
     }
 
     // The original per-timestep analog MNA solve. No longer called from

@@ -77,6 +77,8 @@ export class MouseManager {
     draggingPost: number = -1;
     heldSwitchElm: CircuitElm | null = null; // SwitchElm
     private mouseDragging: boolean = false;
+    private minimapDragging: boolean = false;
+    private minimapClicked: boolean = false; // swallow the click that ends a minimap drag
     menuClientX: number = 0;
     menuClientY: number = 0;
     menuX: number = 0;
@@ -750,6 +752,10 @@ export class MouseManager {
 	const canvas = this.ui.cv as HTMLCanvasElement;
 	this.mouseCursorX = this.getCanvasX(canvas, e.clientX);
 	this.mouseCursorY = this.getCanvasY(canvas, e.clientY);
+	if (this.minimapDragging) {
+	    this.ui.minimapPan(this.mouseCursorX, this.mouseCursorY, true);
+	    return;
+	}
 	if (this.mouseDragging) {
 	    this.mouseDragged(e);
 	    return;
@@ -995,6 +1001,10 @@ export class MouseManager {
 
     private onClick(e: MouseEvent): void {
 	e.preventDefault();
+	if (this.minimapClicked) {
+	    this.minimapClicked = false;
+	    return;
+	}
 	if (e.button === 1) // middle button
 	    this.scrollValues(e.clientX, e.clientY, 0);
 	if (this.mouseElm != null) {
@@ -1047,6 +1057,10 @@ export class MouseManager {
 	this.mouseDownTime = Date.now();
 	this.mouseDownScreenX = ex;
 	this.mouseDownScreenY = ey;
+	if (e.button === 0 && this.ui.minimapPan(ex, ey, false)) {
+	    this.minimapDragging = true;
+	    return;
+	}
 
 	// maybe someone did copy in another window?  should really do this when
 	// window receives focus
@@ -1195,6 +1209,12 @@ export class MouseManager {
 	// a toolbar drag-and-drop in progress is finished by the document-level handler instead
 	if (this.isToolbarDragPending())
 	    return;
+	if (this.minimapDragging) {
+	    this.minimapDragging = false;
+	    this.minimapClicked = true;
+	    this.ui.minimapRelease();
+	    return;
+	}
 
 	// click to clear selection (but not on a right-click, e.g. from a context-menu mouseup)
 	if (this.tempMouseMode === MouseManager.MODE_SELECT && this.selectedArea == null && e.button === 0)
@@ -1299,6 +1319,24 @@ export class MouseManager {
 
     private onMouseWheel(e: WheelEvent): void {
 	e.preventDefault();
+
+	// trackpad mode: two-finger scroll pans the circuit, pinch zooms it (browsers,
+	// including Safari 18+, deliver a trackpad pinch as a wheel event with ctrlKey set).
+	// Scopes still get the wheel so their settings stay adjustable.
+	if (this.sim.menus.trackpadPanCheckItem.getState() &&
+	    this.sim.scopeManager.scopeSelected === -1 && !this.sim.modalDialogIsShowing()) {
+	    if (e.ctrlKey) {
+		const canvas = this.ui.cv as HTMLCanvasElement;
+		this.mouseCursorX = this.getCanvasX(canvas, e.clientX);
+		this.mouseCursorY = this.getCanvasY(canvas, e.clientY);
+		this.zoomCircuit(-e.deltaY * this.wheelSensitivity);
+	    } else {
+		this.sim.transform[4] -= e.deltaX;
+		this.sim.transform[5] -= e.deltaY;
+	    }
+	    this.sim.repaint();
+	    return;
+	}
 
 	// once we start zooming, don't allow other uses of mouse wheel for a while
 	// so we don't accidentally edit a resistor value while zooming

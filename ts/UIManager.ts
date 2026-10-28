@@ -40,6 +40,7 @@ import { SubcircuitBar } from "./SubcircuitBar";
 import { MyCommand } from "./MyCommand";
 import { parseIntStrict, parseFloatStrict } from "./NumberParse";
 import { CommandPaletteRegistry } from "./CommandPaletteRegistry";
+import { TimingAnalysis } from "./TimingAnalysis";
 
 // GWT KeyCodes equivalents
 const KEY_BACKSPACE = 8;
@@ -513,6 +514,8 @@ export class UIManager {
         let hideSidebar = false;
         let noEditing = false;
         let mouseWheelEdit = false;
+        let trackpadPan = false;
+        let minimap = true;
 
         this.hideMenu = false;
 
@@ -540,6 +543,8 @@ export class UIManager {
                                this.getOptionFromStorage("conventionalCurrent", true));
             noEditing     = !qp.getBooleanValue("editable", true);
             mouseWheelEdit = qp.getBooleanValue("mouseWheelEdit", this.getOptionFromStorage("mouseWheelEdit", true));
+            trackpadPan   = qp.getBooleanValue("trackpadPan", this.getOptionFromStorage("trackpadPan", false));
+            minimap       = qp.getBooleanValue("minimap", this.getOptionFromStorage("minimap", true));
             positiveColor = qp.getValue("positiveColor");
             negativeColor = qp.getValue("negativeColor");
             neutralColor  = qp.getValue("neutralColor");
@@ -610,7 +615,7 @@ export class UIManager {
 
         this.menus.pasteItem.setEnabled(false);
 
-        this.menus.dotsCheckItem.setState(true);
+        this.menus.dotsCheckItem.setState(false);
         this.menus.voltsCheckItem.setState(true);
         this.menus.showValuesCheckItem.setState(true);
         this.menus.toolbarCheckItem.setState(
@@ -662,6 +667,8 @@ export class UIManager {
         this.menus.conventionCheckItem.setState(convention);
         this.menus.noEditCheckItem.setState(noEditing);
         this.menus.mouseWheelEditCheckItem.setState(mouseWheelEdit);
+        this.menus.trackpadPanCheckItem.setState(trackpadPan);
+        this.menus.minimapCheckItem.setState(minimap);
 
         this.loadShortcuts();
 
@@ -736,6 +743,15 @@ export class UIManager {
         this.runStopButton.className = 'topButton';
         this.runStopButton.addEventListener('click', () => this.setSimRunning(!this.simIsRunning()));
         this.buttonPanel.appendChild(this.runStopButton);
+
+        for (const [label, title, clock] of [["Step", "Advance one gate delay", false], ["Step Clock", "Advance one clock cycle (to just before the next rising edge)", true]] as const) {
+            const b = document.createElement('button');
+            b.textContent = Locale.LS(label);
+            b.title = Locale.LS(title);
+            b.className = 'topButton';
+            b.addEventListener('click', () => this.stepSim(clock));
+            this.buttonPanel.appendChild(b);
+        }
 
         /*
         dumpMatrixButton = new Button("Dump Matrix");
@@ -997,6 +1013,76 @@ export class UIManager {
         return this.app.simRunning;
     }
 
+    // ---- Minimap ----
+    // Where the minimap was last drawn and its mapping to circuit coordinates (null = not shown),
+    // plus a copy frozen while it's being dragged so the view doesn't chase its own rescaling.
+    private minimap: { x: number; y: number; w: number; h: number; ox: number; oy: number; s: number } | null = null;
+    private minimapDrag: typeof this.minimap = null;
+
+    // overview of the whole circuit in the top-right corner, shown when part of it is off screen
+    private drawMinimap(g: Graphics): void {
+        const b = this.getCircuitBounds();
+        if (b == null) return;
+        const area = this.app.circuitArea, t = this.app.transform;
+        const vx = -t[4] / t[0], vy = -t[5] / t[3], vw = area.width / t[0], vh = area.height / t[3];
+        if (b.x >= vx && b.y >= vy && b.x + b.width <= vx + vw && b.y + b.height <= vy + vh)
+            return;
+        const ox = Math.min(b.x, vx), oy = Math.min(b.y, vy);
+        const uw = Math.max(b.x + b.width, vx + vw) - ox, uh = Math.max(b.y + b.height, vy + vh) - oy;
+        const s = Math.min(160 / uw, 120 / uh);
+        const w = uw * s, h = uh * s, x = area.width - w - 12, y = 12;
+        this.minimap = { x, y, w, h, ox, oy, s };
+        const ctx = g.context, light = this.menus.printableCheckItem.getState();
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.fillStyle = light ? "rgba(255,255,255,0.85)" : "rgba(30,30,30,0.85)";
+        ctx.strokeStyle = "#888";
+        ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+        ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+        ctx.strokeStyle = light ? "#555" : "#aaa";
+        ctx.beginPath();
+        for (const ce of this.elmList) {
+            const bb = ce.getBoundingBox();
+            if (bb == null || ce.getClassName() === "WireElm") {
+                ctx.moveTo(x + (ce.x - ox) * s, y + (ce.y - oy) * s);
+                ctx.lineTo(x + (ce.x2 - ox) * s, y + (ce.y2 - oy) * s);
+            } else
+                ctx.rect(x + (bb.x - ox) * s, y + (bb.y - oy) * s, Math.max(1, bb.width * s), Math.max(1, bb.height * s));
+        }
+        ctx.stroke();
+        ctx.strokeStyle = CircuitElm.selectColor.getHexValue();
+        ctx.strokeRect(x + (vx - ox) * s, y + (vy - oy) * s, vw * s, vh * s);
+        ctx.restore();
+    }
+
+    // Centers the view on the circuit point under (x, y) if it's on the minimap (or always, while
+    // a minimap drag is in progress). Returns whether it did.
+    minimapPan(x: number, y: number, dragging: boolean): boolean {
+        if (!dragging) {
+            const m = this.minimap;
+            if (m == null || x < m.x || y < m.y || x > m.x + m.w || y > m.y + m.h)
+                return false;
+            this.minimapDrag = { ...m };
+        }
+        const m = this.minimapDrag;
+        if (m == null)
+            return false;
+        const t = this.app.transform;
+        t[4] = this.app.circuitArea.width / 2 - (m.ox + (x - m.x) / m.s) * t[0];
+        t[5] = this.app.circuitArea.height / 2 - (m.oy + (y - m.y) / m.s) * t[3];
+        this.repaint();
+        return true;
+    }
+
+    minimapRelease(): void { this.minimapDrag = null; }
+
+    // stops the simulation and advances it one gate delay or one clock cycle
+    stepSim(toClockEdge: boolean): void {
+        this.setSimRunning(false);
+        this.app.sim.stepDigital(toClockEdge);
+        this.repaint();
+    }
+
     // find the element in "list" to highlight for target: either target itself, or,
     // if target is nested inside a subcircuit/composite not in list, walk up through
     // its owning composites until we reach one that's in list (e.g. the subcircuit
@@ -1189,6 +1275,16 @@ export class UIManager {
             g.fillOval(cn.x - 3, cn.y - 3, 7, 7);
         }
 
+        // critical path / timing violations (see TimingAnalysis)
+        g.save();
+        g.setLineWidth(2);
+        for (const [elm, color] of TimingAnalysis.marks) {
+            const bb = elm.getBoundingBox();
+            g.setColor(color);
+            g.drawRect(bb.x - 4, bb.y - 4, bb.width + 8, bb.height + 8);
+        }
+        g.restore();
+
         if (this.mouse.selectedArea != null) {
             g.setColor(CircuitElm.selectColor);
             g.drawRect(this.mouse.selectedArea.x, this.mouse.selectedArea.y,
@@ -1209,6 +1305,10 @@ export class UIManager {
             WireRouter.lastRouter.drawGrid(g.context, true);*/
 
         this.cvcontext.setTransform(scale, 0, 0, scale, 0, 0);
+
+        this.minimap = null;
+        if (this.menus.minimapCheckItem.getState())
+            this.drawMinimap(g);
 
         perfmon.startContext("drawBottomArea()");
         this.drawBottomArea(g);

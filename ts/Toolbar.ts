@@ -64,28 +64,27 @@ export class Toolbar {
 
         this.element.appendChild(this.createIconButtonForClass(this.wireIcon, "WireElm"));
         this.resistorButton = this.createIconButtonForClass(this.resistorIcon, "ResistorElm");
-        this.element.appendChild(this.resistorButton);
+        //this.element.appendChild(this.resistorButton);
         this.element.appendChild(this.createIconButtonForClass(this.groundIcon, "GroundElm"));
-        const capacitorInfo = [this.capacitorIcon, "CapacitorElm", this.polarCapacitorIcon, "PolarCapacitorElm"];
-        this.element.appendChild(this.createButtonSet(capacitorInfo));
-        this.element.appendChild(this.createIconButtonForClass(this.inductIcon, "InductorElm"));
-        this.element.appendChild(this.createIconButtonForClass(this.diodeIcon, "DiodeElm"));
-        const srcInfo = [this.voltage2Icon, "DCVoltageElm", this.acSrcIcon, "ACVoltageElm"];
-        this.element.appendChild(this.createButtonSet(srcInfo));
+        //const capacitorInfo = [this.capacitorIcon, "CapacitorElm", this.polarCapacitorIcon, "PolarCapacitorElm"];
+        //this.element.appendChild(this.createButtonSet(capacitorInfo));
+        //this.element.appendChild(this.createIconButtonForClass(this.inductIcon, "InductorElm"));
+        //this.element.appendChild(this.createIconButtonForClass(this.diodeIcon, "DiodeElm"));
+        //const srcInfo = [this.voltage2Icon, "DCVoltageElm", this.acSrcIcon, "ACVoltageElm"];
+        //this.element.appendChild(this.createButtonSet(srcInfo));
         this.element.appendChild(this.createIconButtonForClass(this.railIcon, "RailElm"));
 
-        const switchInfo = [this.switchIcon, "SwitchElm", this.spdtIcon, "Switch2Elm", this.aswitch1Icon, "AnalogSwitchElm",
-                            this.aswitch2Icon, "AnalogSwitch2Elm"];
+        const switchInfo = [this.switchIcon, "SwitchElm", this.spdtIcon, "Switch2Elm"];
         this.element.appendChild(this.createButtonSet(switchInfo));
 
-        const opAmpInfo = [this.opAmpBotIcon, "OpAmpElm", this.opAmpTopIcon, "OpAmpSwapElm"];
-        this.element.appendChild(this.createButtonSet(opAmpInfo));
+        //const opAmpInfo = [this.opAmpBotIcon, "OpAmpElm", this.opAmpTopIcon, "OpAmpSwapElm"];
+        //this.element.appendChild(this.createButtonSet(opAmpInfo));
 
-        const transistorInfo = [this.transistorIcon, "NTransistorElm", this.pnpTransistorIcon, "PTransistorElm"];
-        this.element.appendChild(this.createButtonSet(transistorInfo));
+        //const transistorInfo = [this.transistorIcon, "NTransistorElm", this.pnpTransistorIcon, "PTransistorElm"];
+        //this.element.appendChild(this.createButtonSet(transistorInfo));
 
-        const fetInfo = [this.fetIcon, "NMosfetElm", this.fetIcon2, "PMosfetElm"];
-        this.element.appendChild(this.createButtonSet(fetInfo));
+        //const fetInfo = [this.fetIcon, "NMosfetElm", this.fetIcon2, "PMosfetElm"];
+        //this.element.appendChild(this.createButtonSet(fetInfo));
 
         this.element.appendChild(this.createIconButtonForClass(this.inverterIcon, "InverterElm"));
         const gateInfo = [this.andIcon, "AndGateElm", this.nandIcon, "NandGateElm",

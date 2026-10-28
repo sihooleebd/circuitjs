@@ -167,13 +167,19 @@ export class CommandPaletteRegistry {
 
         CommandPaletteRegistry.add("tools:convertWires", "Convert Wires to Routed Wires", "Tools", "convert wires routed", "tools", "convertWires");
         CommandPaletteRegistry.add("tools:subcircuits", "Subcircuit Manager", "Tools", "subcircuit manager", "tools", "subcircuits");
+        CommandPaletteRegistry.add("tools:stepgate", "Step One Gate Delay", "Tools", "step single gate delay event", "tools", "stepgate");
+        CommandPaletteRegistry.add("tools:stepclock", "Step One Clock Cycle", "Tools", "step clock cycle edge tick", "tools", "stepclock");
+        CommandPaletteRegistry.add("tools:logicanalyzer", "Logic Analyzer", "Tools", "logic analyzer waveform timing diagram vcd bus", "tools", "logicanalyzer");
+        CommandPaletteRegistry.add("tools:timing", "Timing Analysis...", "Tools", "critical path setup hold glitch hazard fmax", "tools", "timing");
+        CommandPaletteRegistry.add("tools:truthtable", "Truth Table / Build from Expressions...", "Tools", "truth table karnaugh kmap boolean expression minimize test bench", "tools", "truthtable");
+        CommandPaletteRegistry.add("tools:exportverilog", "Export Verilog", "Tools", "verilog netlist hdl export", "tools", "exportverilog");
 
         CommandPaletteRegistry.add("key:runstop", "Run/Stop Simulation", "Simulation", "run stop pause start simulation", "key", "runstop");
 
-        const dots = m.dotsCheckItem;
-        CommandPaletteRegistry.addToggle("options:showcurrent", "Show Current", "Options", "current dots flow", {
-            execute: () => { dots.toggle(); app.repaint(); }
-        });
+//      const dots = m.dotsCheckItem;
+//      CommandPaletteRegistry.addToggle("options:showcurrent", "Show Current", "Options", "current dots flow", {
+//          execute: () => { dots.toggle(); app.repaint(); }
+//      });
         const volts = m.voltsCheckItem;
         const power = m.powerCheckItem;
         CommandPaletteRegistry.addToggle("options:showvoltage", "Show Voltage", "Options", "voltage power bar", {
@@ -184,14 +190,14 @@ export class CommandPaletteRegistry {
                 app.setPowerBarEnable();
             }
         });
-        CommandPaletteRegistry.addToggle("options:showpower", "Show Power", "Options", "power bar watt", {
-            execute: () => {
-                power.setState(!power.getState());
-                if (power.getState())
-                    volts.setState(false);
-                app.setPowerBarEnable();
-            }
-        });
+//      CommandPaletteRegistry.addToggle("options:showpower", "Show Power", "Options", "power bar watt", {
+//          execute: () => {
+//              power.setState(!power.getState());
+//              if (power.getState())
+//                  volts.setState(false);
+//              app.setPowerBarEnable();
+//          }
+//      });
         const showValues = m.showValuesCheckItem;
         CommandPaletteRegistry.addToggle("options:showvalues", "Show Values", "Options", "values labels", {
             execute: () => { showValues.toggle(); app.repaint(); }
@@ -208,14 +214,14 @@ export class CommandPaletteRegistry {
         CommandPaletteRegistry.addToggle("options:crosshair", "Show Cursor Crosshair", "Options", "crosshair cursor", {
             execute: () => { crossHair.toggle(); app.setOptionInStorage("crossHair", crossHair.getState()); }
         });
-        const euroRes = m.euroResistorCheckItem;
-        CommandPaletteRegistry.addToggle("options:euroresistors", "European Resistors", "Options", "european resistors iec", {
-            execute: () => { euroRes.toggle(); app.repaint(); }
-        });
-        const showOhm = m.showOhmCheckItem;
-        CommandPaletteRegistry.addToggle("options:showohm", "Show Ω Unit", "Options", "ohm unit omega", {
-            execute: () => { showOhm.toggle(); app.repaint(); }
-        });
+//      const euroRes = m.euroResistorCheckItem;
+//      CommandPaletteRegistry.addToggle("options:euroresistors", "European Resistors", "Options", "european resistors iec", {
+//          execute: () => { euroRes.toggle(); app.repaint(); }
+//      });
+//      const showOhm = m.showOhmCheckItem;
+//      CommandPaletteRegistry.addToggle("options:showohm", "Show Ω Unit", "Options", "ohm unit omega", {
+//          execute: () => { showOhm.toggle(); app.repaint(); }
+//      });
         const euroGates = m.euroGatesCheckItem;
         CommandPaletteRegistry.addToggle("options:eurogates", "IEC Gates", "Options", "iec gates logic", {
             execute: () => { euroGates.toggle(); app.repaint(); }
@@ -224,10 +230,10 @@ export class CommandPaletteRegistry {
         CommandPaletteRegistry.addToggle("options:whitebackground", "White Background", "Options", "white background printable", {
             execute: () => { printable.toggle(); app.repaint(); }
         });
-        const convention = m.conventionCheckItem;
-        CommandPaletteRegistry.addToggle("options:conventionalcurrent", "Conventional Current Motion", "Options", "conventional current", {
-            execute: () => { convention.toggle(); app.repaint(); }
-        });
+//      const convention = m.conventionCheckItem;
+//      CommandPaletteRegistry.addToggle("options:conventionalcurrent", "Conventional Current Motion", "Options", "conventional current", {
+//          execute: () => { convention.toggle(); app.repaint(); }
+//      });
         const noEdit = m.noEditCheckItem;
         CommandPaletteRegistry.addToggle("options:disableediting", "Disable Editing", "Options", "disable editing readonly", {
             execute: () => { noEdit.toggle(); }
@@ -237,6 +243,13 @@ export class CommandPaletteRegistry {
             execute: () => {
                 mouseWheelEdit.setState(!mouseWheelEdit.getState());
                 app.setOptionInStorage("mouseWheelEdit", mouseWheelEdit.getState());
+            }
+        });
+        const trackpadPan = m.trackpadPanCheckItem;
+        CommandPaletteRegistry.addToggle("options:trackpadpan", "Trackpad: Scroll to Pan, Pinch to Zoom", "Options", "trackpad touchpad pan scroll pinch zoom", {
+            execute: () => {
+                trackpadPan.setState(!trackpadPan.getState());
+                app.setOptionInStorage("trackpadPan", trackpadPan.getState());
             }
         });
 

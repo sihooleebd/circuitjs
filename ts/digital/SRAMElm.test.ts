@@ -3,7 +3,7 @@
 // entries (chips/82S16.cpp, chips/8225.cpp), except SRAMElm's data pins are genuinely
 // bidirectional (same pin drives while reading, receives while writing) where those real chips
 // have separate Din/Dout pins - so a write must capture the RESOLVED bus value via the readback
-// pin, not this element's own (forced-to-0-while-writing) output. Same Object.create()-based
+// pin, not this element's own output post. Same Object.create()-based
 // construction and manualSource()/probe()/connect() helpers as DigitalSynthesisPhase3.test.ts
 // (see its header comment for why).
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -169,10 +169,10 @@ describe("SRAMElm.digitalSynthesis() - write (via digitalTriStateReadbackPin)", 
         warn.mockRestore();
     });
 
-    it("never drives its own output while WE is asserted, regardless of OE", () => {
-        const sram = makeSram(1, 1, [[1, 1]]);
+    it("drives the bit being written (write-through, not the stored bit) while WE and OE are asserted", () => {
+        const sram = makeSram(1, 1, [[1, 0]]);
         const we = tieSource("GND"); // asserted
-        const oe = tieSource("GND"); // asserted too - should still not drive while writing
+        const oe = tieSource("GND"); // asserted too - 82S16-style write-through
         const addr = tieSource("VCC");
         const writer = triStateSource(1, 1);
         const sink = probe();
@@ -186,7 +186,7 @@ describe("SRAMElm.digitalSynthesis() - write (via digitalTriStateReadbackPin)", 
         writer.chip = chipsByElm.get(writer)![0];
         circuit.run(20);
 
-        expect(chipAt(sram, 3, chipsByElm).output).toBe(0); // SRAM's own contribution stays 0
+        expect(chipAt(sram, 3, chipsByElm).output).toBe(1); // follows the written 1, not stored 0
         expect(chipsByElm.get(sink)![0].inputLinks[0].chip.output).toBe(1); // bus shows writer's 1
         expect(sram.map.get(1)).toBe(1); // and it got captured
     });

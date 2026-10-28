@@ -408,6 +408,27 @@ export class Circuit {
         }
     }
 
+    /** The next event that will actually fire (cancelled entries - whose chip's pendingEvent has
+     * since moved - are popped on the way, exactly as run() would discard them), or null if the
+     * queue is empty. For settling a scratch copy of a circuit (TruthTableDialog's ScratchCircuit). */
+    peekLiveEvent(): { time: number; chip: Chip } | null {
+        while (this.queueSize) {
+            const chip = this.queueChip[1]!, time = this.queueTime[1];
+            if (chip.pendingEvent === time) return { time, chip };
+            this.queuePop();
+        }
+        return null;
+    }
+
+    /** Fires every event at the next live event instant (and any zero-delay events they cause). */
+    stepToNextInstant(): boolean {
+        const ev = this.peekLiveEvent();
+        if (ev == null) return false;
+        this.globalTime = ev.time;
+        this.drainZeroDelayEvents();
+        return true;
+    }
+
     /**
      * Runs for (at least) `runTimeIn` ticks. Ported as-is from dice-ts, overshoot included: the
      * loop tests `runTime > 0` BEFORE jumping, so the last jump lands globalTime on the next

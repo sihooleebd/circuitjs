@@ -499,13 +499,16 @@ export class SRAMElm extends ChipElm implements DigitalTriStateDriver, DigitalTr
                 // 82S16 has no real /OE pin - this element's /OE stands in for its 3-input /CE,
                 // which alone gates whether the output drives at all. /WE only selects whether
                 // that driven value is the stored bit (read) or the bit being written
-                // (write-through) - see doStep()'s matching logic above.
+                // (write-through) - see doStep()'s matching logic above. The write itself is
+                // NOT gated by /OE, same as stepFinished().
+                if (weActive) {
+                    const cur = this.map.get(address) ?? 0;
+                    this.map.set(address, dataIn ? (cur | bitMask) : (cur & ~bitMask));
+                }
                 let newOut: number;
                 if (!oeActive) {
                     newOut = 0; // tri-stated whenever disabled, regardless of /WE
                 } else if (weActive) {
-                    const cur = this.map.get(address) ?? 0;
-                    this.map.set(address, dataIn ? (cur | bitMask) : (cur & ~bitMask));
                     newOut = dataIn;
                 } else {
                     newOut = ((this.map.get(address) ?? 0) & bitMask) ? 1 : 0;
